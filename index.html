@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#070a09">
+    <meta
+      name="description"
+      content="Sebuah kejutan kecil, dibuka lewat animasi terminal."
+    >
+    <title>Access Granted — A Little Surprise</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #070a09;
+        --green: #b6ffce;
+        --muted: #78877e;
+        --line: rgb(182 255 206 / 13%);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        overflow-x: hidden;
+        background:
+          radial-gradient(ellipse at 50% 46%, rgb(17 45 30 / 28%), transparent 58%),
+          var(--bg);
+        color: #eef5ef;
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      }
+
+      body::after {
+        position: fixed;
+        z-index: 4;
+        pointer-events: none;
+        background: repeating-linear-gradient(
+          to bottom,
+          transparent 0,
+          rgb(0 0 0 / 8%) 1px,
+          transparent 3px,
+          transparent 5px
+        );
+        content: "";
+        inset: 0;
+      }
+
+      .grain {
+        position: fixed;
+        z-index: 0;
+        pointer-events: none;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' opacity='.2' filter='url(%23n)'/%3E%3C/svg%3E");
+        opacity: 0.12;
+        inset: 0;
+      }
+
+      #matrix {
+        position: fixed;
+        z-index: 0;
+        opacity: 0.2;
+        inset: 0;
+      }
+
+      .page {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        min-height: 100svh;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 46px 22px 28px;
+      }
+
+      .topbar,
+      .footer {
+        position: absolute;
+        right: 32px;
+        left: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: var(--muted);
+        font-size: 10px;
+        letter-spacing: 0.17em;
+        text-transform: uppercase;
+      }
+
+      .topbar {
+        top: 28px;
+      }
+
+      .footer {
+        bottom: 22px;
+        font-size: 9px;
+        letter-spacing: 0.12em;
+      }
+
+      .brand,
+      .status,
+      .footer span {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 25px;
+        height: 25px;
+        place-items: center;
+        border: 1px solid rgb(182 255 206 / 32%);
+        color: var(--green);
+        font-size: 11px;
+        letter-spacing: 0;
+      }
+
+      .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 12px rgb(139 255 176 / 75%);
+        animation: pulse 1.6s ease-in-out infinite;
+      }
+
+      .showcase {
+        width: min(100%, 638px);
+        margin-top: -6px;
+        text-align: center;
+      }
+
+      .eyebrow {
+        margin: 0 0 19px;
+        color: #90b29a;
+        font-size: 10px;
+        letter-spacing: 0.31em;
+        text-transform: uppercase;
+      }
+
+      .headline {
+        margin: 0 0 31px;
+        font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+        font-size: clamp(35px, 7vw, 58px);
+        font-weight: 400;
+        letter-spacing: -0.045em;
+        line-height: 1.06;
+      }
+
+      .headline em {
+        color: var(--green);
+        font-weight: 400;
+      }
+
+      .terminal {
+        width: min(100%, 476px);
+        margin: 0 auto;
+        padding: 17px 19px 15px;
+        border: 1px solid var(--line);
+        background: rgb(8 13 10 / 83%);
+        box-shadow: 0 0 55px rgb(30 94 52 / 9%), inset 0 1px rgb(255 255 255 / 2%);
+        text-align: left;
+        backdrop-filter: blur(12px);
+      }
+
+      .terminal-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 15px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgb(182 255 206 / 9%);
+        color: #76847a;
+        font-size: 9px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .terminal-lights {
+        display: flex;
+        gap: 5px;
+      }
+
+      .terminal-lights i {
+        width: 6px;
+        height: 6px;
+        border: 1px solid rgb(182 255 206 / 35%);
+        border-radius: 50%;
+      }
+
+      .terminal-output {
+        min-height: 105px;
+        color: #a4baa9;
+        font-size: clamp(10px, 2.8vw, 11px);
+        line-height: 1.9;
+      }
+
+      .terminal-line {
+        min-height: 21px;
+      }
+
+      .prompt,
+      .success {
+        color: var(--green);
+      }
+
+      .cursor {
+        display: inline-block;
+        width: 6px;
+        height: 12px;
+        margin-left: 2px;
+        background: var(--green);
+        vertical-align: -2px;
+        animation: blink 0.8s steps(2, start) infinite;
+      }
+
+      .progress-track {
+        height: 2px;
+        margin-top: 12px;
+        overflow: hidden;
+        background: rgb(182 255 206 / 10%);
+      }
+
+      .progress-fill {
+        width: 0;
+        height: 100%;
+        background: var(--green);
+        box-shadow: 0 0 12px var(--green);
+        transition: width 350ms ease;
+      }
+
+      .photo-reveal {
+        max-height: 0;
+        margin-top: 0;
+        overflow: hidden;
+        opacity: 0;
+        transform: translateY(14px);
+        transition:
+          max-height 700ms ease,
+          margin-top 700ms ease,
+          opacity 700ms ease,
+          transform 700ms cubic-bezier(0.2, 0.7, 0.25, 1);
+      }
+
+      .photo-reveal.visible {
+        max-height: 520px;
+        margin-top: 26px;
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .photo-frame {
+        position: relative;
+        width: min(100%, 390px);
+        margin: 0 auto;
+        overflow: hidden;
+        border: 1px solid rgb(182 255 206 / 38%);
+        background: #101713;
+        box-shadow: 0 18px 70px rgb(0 0 0 / 52%), 0 0 34px rgb(55 155 83 / 14%);
+      }
+
+      .photo-frame::before,
+      .photo-frame::after {
+        position: absolute;
+        z-index: 1;
+        width: 20px;
+        height: 20px;
+        border-color: var(--green);
+        content: "";
+        pointer-events: none;
+      }
+
+      .photo-frame::before {
+        top: 8px;
+        left: 8px;
+        border-top: 1px solid;
+        border-left: 1px solid;
+      }
+
+      .photo-frame::after {
+        right: 8px;
+        bottom: 8px;
+        border-right: 1px solid;
+        border-bottom: 1px solid;
+      }
+
+      .photo-frame img {
+        display: block;
+        width: 100%;
+        max-height: 340px;
+        object-fit: cover;
+        object-position: center 43%;
+        filter: saturate(0.82);
+      }
+
+      .photo-caption {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        width: min(100%, 390px);
+        margin: 12px auto 0;
+        color: #84968a;
+        font-size: 9px;
+        letter-spacing: 0.14em;
+        text-align: left;
+        text-transform: uppercase;
+      }
+
+      .photo-frame .photo-caption {
+        padding: 0 0 12px;
+      }
+
+      .photo-caption strong {
+        color: var(--green);
+        font-weight: 400;
+      }
+
+      .replay {
+        display: none;
+        margin: 17px auto 0;
+        padding: 8px 12px;
+        border: 1px solid rgb(182 255 206 / 22%);
+        background: transparent;
+        color: #adbeaf;
+        cursor: pointer;
+        font: inherit;
+        font-size: 9px;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+        transition: border-color 180ms ease, color 180ms ease;
+      }
+
+      .replay:hover,
+      .replay:focus-visible {
+        border-color: var(--green);
+        color: var(--green);
+      }
+
+      .replay.visible {
+        display: block;
+      }
+
+      @keyframes blink {
+        to {
+          visibility: hidden;
+        }
+      }
+
+      @keyframes pulse {
+        50% {
+          opacity: 0.45;
+          box-shadow: 0 0 4px rgb(139 255 176 / 35%);
+        }
+      }
+
+      @media (max-width: 520px) {
+        .page {
+          padding: 74px 17px 52px;
+        }
+
+        .topbar {
+          top: 18px;
+          right: 17px;
+          left: 17px;
+          font-size: 8px;
+        }
+
+        .footer {
+          right: 17px;
+          bottom: 15px;
+          left: 17px;
+          font-size: 8px;
+        }
+
+        .terminal {
+          padding: 14px 14px 12px;
+        }
+
+        .photo-reveal.visible {
+          margin-top: 20px;
+        }
+
+        .photo-frame img {
+          max-height: 42vh;
+        }
+
+        .photo-reveal.visible {
+          max-height: 460px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="matrix" aria-hidden="true"></canvas>
+    <div class="grain" aria-hidden="true"></div>
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">E/</span><span>Excellent Studio</span></div>
+      <div class="status"><span class="status-dot"></span><span>System online</span></div>
+    </header>
+
+    <main class="page">
+      <section class="showcase" aria-label="Kejutan foto">
+        <p class="eyebrow">A little surprise, just for you</p>
+        <h1 class="headline">Sesuatu yang <em>spesial</em><br>sedang dibuka.</h1>
+
+        <div class="terminal" aria-label="Animasi terminal">
+          <div class="terminal-bar">
+            <span>Secure connection // 01</span>
+            <span class="terminal-lights" aria-hidden="true"><i></i><i></i><i></i></span>
+          </div>
+          <div class="terminal-output" id="terminal-output" aria-live="polite">
+            <div class="terminal-line"><span class="prompt">guest@excellent:~$</span> <span id="typed"></span><span class="cursor" id="cursor"></span></div>
+          </div>
+          <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="progress"></div></div>
+        </div>
+
+        <div class="photo-reveal" id="photo-reveal" aria-hidden="true">
+          <figure class="photo-frame">
+            <img
+              src="WhatsApp%20Image%202026-11-17%20at%2014.18.32.jpeg"
+              alt="Foto kenangan yang kamu unggah"
+              fetchpriority="high"
+            >
+            <figcaption class="photo-caption">
+              <span><strong>Access granted</strong> // memory unlocked</span>
+              <span>01 — 01</span>
+            </figcaption>
+          </figure>
+        </div>
+        <button class="replay" id="replay" type="button">↺ &nbsp; Putar ulang animasi</button>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>Made with a little bit of magic</span>
+      <span>Est. 2026</span>
+    </footer>
+
+    <script>
+      const output = document.getElementById("terminal-output");
+      const typed = document.getElementById("typed");
+      const cursor = document.getElementById("cursor");
+      const progress = document.getElementById("progress");
+      const photo = document.getElementById("photo-reveal");
+      const replay = document.getElementById("replay");
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const commands = [
+        "initializing memory sequence...",
+        "establishing secure connection... OK",
+        "locating a moment worth keeping... FOUND",
+        "decrypting the good stuff...",
+      ];
+      let timers = [];
+
+      function clearSequence() {
+        timers.forEach(window.clearTimeout);
+        timers = [];
+      }
+
+      function schedule(callback, delay) {
+        timers.push(window.setTimeout(callback, delay));
+      }
+
+      function startSequence() {
+        clearSequence();
+        typed.textContent = "";
+        output.querySelectorAll(".completed-line").forEach((line) => line.remove());
+        cursor.style.display = "inline-block";
+        progress.style.width = "0";
+        photo.classList.remove("visible");
+        photo.setAttribute("aria-hidden", "true");
+        replay.classList.remove("visible");
+
+        if (reduceMotion) {
+          finishSequence();
+          return;
+        }
+
+        let lineIndex = 0;
+        let charIndex = 0;
+
+        function typeNextCharacter() {
+          const command = commands[lineIndex];
+          typed.textContent = command.slice(0, charIndex + 1);
+          charIndex++;
+          progress.style.width = `${Math.round(((lineIndex + charIndex / command.length) / commands.length) * 100)}%`;
+
+          if (charIndex < command.length) {
+            schedule(typeNextCharacter, 22 + Math.random() * 28);
+            return;
+          }
+
+          schedule(() => {
+            const completedLine = document.createElement("div");
+            completedLine.className = "terminal-line completed-line";
+            completedLine.textContent = `> ${command}`;
+            output.appendChild(completedLine);
+            typed.textContent = "";
+            charIndex = 0;
+            lineIndex++;
+
+            if (lineIndex < commands.length) {
+              schedule(typeNextCharacter, 280);
+            } else {
+              finishSequence();
+            }
+          }, 310);
+        }
+
+        schedule(typeNextCharacter, 450);
+      }
+
+      function finishSequence() {
+        typed.textContent = "ACCESS GRANTED";
+        typed.classList.add("success");
+        cursor.style.display = "none";
+        progress.style.width = "100%";
+        photo.classList.add("visible");
+        photo.setAttribute("aria-hidden", "false");
+        replay.classList.add("visible");
+      }
+
+      replay.addEventListener("click", () => {
+        typed.classList.remove("success");
+        startSequence();
+      });
+
+      const canvas = document.getElementById("matrix");
+      const context = canvas.getContext("2d");
+      const glyphs = "01アイウエオカキクケコ";
+      let columns = [];
+      let frame = 0;
+
+      function resizeMatrix() {
+        const scale = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = window.innerWidth * scale;
+        canvas.height = window.innerHeight * scale;
+        canvas.style.width = `${window.innerWidth}px`;
+        canvas.style.height = `${window.innerHeight}px`;
+        context.setTransform(scale, 0, 0, scale, 0, 0);
+        columns = Array.from({ length: Math.ceil(window.innerWidth / 22) }, () =>
+          Math.random() * (window.innerHeight / 18),
+        );
+      }
+
+      function drawMatrix() {
+        if (reduceMotion) return;
+
+        if (++frame % 2 !== 0) {
+          window.requestAnimationFrame(drawMatrix);
+          return;
+        }
+
+        context.fillStyle = "rgb(7 10 9 / 13%)";
+        context.fillRect(0, 0, window.innerWidth, window.innerHeight);
+        context.fillStyle = "#83d99b";
+        context.font = "11px monospace";
+
+        columns.forEach((y, index) => {
+          const glyph = glyphs[Math.floor(Math.random() * glyphs.length)];
+          context.fillText(glyph, index * 22, y * 18);
+          columns[index] = y * 18 > window.innerHeight && Math.random() > 0.975 ? 0 : y + 0.55;
+        });
+
+        window.requestAnimationFrame(drawMatrix);
+      }
+
+      window.addEventListener("resize", resizeMatrix);
+      resizeMatrix();
+      drawMatrix();
+      startSequence();
+    </script>
+  </body>
+</html>
