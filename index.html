@@ -295,6 +295,12 @@
         object-fit: cover;
         object-position: center 43%;
         filter: saturate(0.82);
+        transition: opacity 650ms ease, transform 900ms ease;
+      }
+
+      .photo-frame img.is-transitioning {
+        opacity: 0;
+        transform: scale(1.025);
       }
 
       .photo-caption {
@@ -439,7 +445,7 @@
             >
             <figcaption class="photo-caption">
               <span><strong>Access granted</strong> // memory unlocked</span>
-              <span>01 — 01</span>
+              <span id="photo-counter">01 — 18</span>
             </figcaption>
           </figure>
         </div>
@@ -458,8 +464,30 @@
       const cursor = document.getElementById("cursor");
       const progress = document.getElementById("progress");
       const photo = document.getElementById("photo-reveal");
+      const slideshowImage = photo.querySelector("img");
+      const photoCounter = document.getElementById("photo-counter");
       const replay = document.getElementById("replay");
       const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const photoFiles = [
+        "WhatsApp Image 2026-11-17 at 14.18.32.jpeg",
+        "photos/WhatsApp Image 2026-11-17 at 15.47.54.jpeg",
+        "photos/WhatsApp Image 2026-11-17 at 15.47.54 (1).jpeg",
+        "photos/WhatsApp Image 2026-11-17 at 15.47.55.jpeg",
+        "photos/WhatsApp Image 2026-11-17 at 15.48.01.jpeg",
+        "photos/WhatsApp Image 2026-11-17 at 15.48.02.jpeg",
+        "photos/WhatsApp Image 2026-11-17 at 15.48.03.jpeg",
+        "photos/WhatsApp Image 2026-11-17 at 15.48.18.jpeg",
+        "photos/WhatsApp Image 2026-11-17 at 15.48.19.jpeg",
+        "photos/WhatsApp Image 2026-11-17 at 15.48.20.jpeg",
+        "photos/WhatsApp Image 2026-11-17 at 15.48.20 (1).jpeg",
+        "photos/WhatsApp Image 2026-11-17 at 15.48.21.jpeg",
+        "photos/WhatsApp Image 2026-11-17 at 15.48.22.jpeg",
+        "photos/WhatsApp Image 2026-11-17 at 15.48.28.jpeg",
+        "photos/WhatsApp Image 2026-11-17 at 15.48.29.jpeg",
+        "photos/WhatsApp Image 2026-11-17 at 15.48.36.jpeg",
+        "photos/WhatsApp Image 2026-11-17 at 15.48.36 (1).jpeg",
+        "photos/WhatsApp Image 2026-11-17 at 15.48.37.jpeg",
+      ];
       const commands = [
         "initializing memory sequence...",
         "establishing secure connection... OK",
@@ -467,6 +495,8 @@
         "decrypting the good stuff...",
       ];
       let timers = [];
+      let slideshowTimer;
+      let slideIndex = 0;
 
       function clearSequence() {
         timers.forEach(window.clearTimeout);
@@ -479,6 +509,11 @@
 
       function startSequence() {
         clearSequence();
+        window.clearInterval(slideshowTimer);
+        slideshowTimer = undefined;
+        slideIndex = 0;
+        slideshowImage.src = new URL(photoFiles[0], document.baseURI).href;
+        photoCounter.textContent = `01 — ${String(photoFiles.length).padStart(2, "0")}`;
         typed.textContent = "";
         output.querySelectorAll(".completed-line").forEach((line) => line.remove());
         cursor.style.display = "inline-block";
@@ -534,6 +569,16 @@
         photo.classList.add("visible");
         photo.setAttribute("aria-hidden", "false");
         replay.classList.add("visible");
+        slideshowTimer = window.setInterval(() => {
+          slideIndex = (slideIndex + 1) % photoFiles.length;
+          slideshowImage.classList.add("is-transitioning");
+          window.setTimeout(() => {
+            slideshowImage.onload = () => slideshowImage.classList.remove("is-transitioning");
+            slideshowImage.onerror = () => slideshowImage.classList.remove("is-transitioning");
+            slideshowImage.src = new URL(photoFiles[slideIndex], document.baseURI).href;
+            photoCounter.textContent = `${String(slideIndex + 1).padStart(2, "0")} — ${String(photoFiles.length).padStart(2, "0")}`;
+          }, 350);
+        }, 4000);
       }
 
       replay.addEventListener("click", () => {
